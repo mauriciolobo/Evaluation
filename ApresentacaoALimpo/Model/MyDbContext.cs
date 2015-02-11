@@ -71,7 +71,7 @@ namespace ApresentacaoALimpo.Model
         }
     }
 
-    class DatabaseCreator : DropCreateDatabaseAlways<MyDbContext>
+    class DatabaseCreator : DropCreateDatabaseIfModelChanges<MyDbContext>
     {
         private Section math = new Section { Name = "Math" };
         private Section english = new Section { Name = "English" };

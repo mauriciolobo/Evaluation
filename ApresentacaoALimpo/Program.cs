@@ -5,14 +5,12 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using ApresentacaoALimpo.Model;
 
 namespace ApresentacaoALimpo
 {
     class Program
-    {
-        private static string embeddedSql = "mylocaldb";
+    {        
         private static string sqlServer = "mysqldb";
 
         static void Main(string[] args)
@@ -46,24 +44,30 @@ where a.WithStudent_Id = @student_id and a.Checkin is null
         {
             //Send email for all students who have any asset and fisished all courses with more than 10 days
             var conn = new SqlConnection(ConfigurationManager.ConnectionStrings[currentDb].ConnectionString);
-            var comm = new SqlCommand(pendingAssetsStudentsQuery, conn);
-            var ds = new DataSet();            
-            new SqlDataAdapter(comm).Fill(ds);            
 
-            foreach (DataRow row in ds.Tables[0].Rows)
+            foreach (DataRow row in GetDataSet(pendingAssetsStudentsQuery, conn).Tables[0].Rows)
             {
-                comm = new SqlCommand(pendingAssetsByStudentId, conn);
-                comm.Parameters.AddWithValue("student_id", (int)row["id"]);
-                ds = new DataSet();
-                new SqlDataAdapter(comm).Fill(ds);
                 var sb = new StringBuilder();
+                
                 sb.AppendLine("---------- this is an automatic email -------------");
-                foreach (DataRow r in ds.Tables[0].Rows)
+                foreach (DataRow r in GetDataSet(pendingAssetsByStudentId, conn, new SqlParameter("student_id", row["Id"])).Tables[0].Rows)
                     sb.AppendLine(string.Format("Need to return object: {0}({1})", r["Name"], r["Id"]));
                 sb.AppendLine("---------------------------------------------------");
+                
                 SendEmailTo((string)row["Email"], sb.ToString());
             }
         }        
+
+        #region Helper Methods
+
+        private static DataSet GetDataSet(string query, SqlConnection conn, params SqlParameter[] parameters)
+        {
+            var comm = new SqlCommand(query, conn);
+            comm.Parameters.AddRange(parameters);
+            var ds = new DataSet();
+            new SqlDataAdapter(comm).Fill(ds);
+            return ds;
+        }
 
         private static void SendEmailTo(string email, string body)
         {
@@ -75,7 +79,6 @@ where a.WithStudent_Id = @student_id and a.Checkin is null
             Console.WriteLine();
         }
 
-        #region Helper Methods
         private static void CreateDatabase(string currentDb)
         {
             Console.WriteLine("Creating database...");
