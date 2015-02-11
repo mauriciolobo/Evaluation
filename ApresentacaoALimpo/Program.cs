@@ -10,12 +10,13 @@ using ApresentacaoALimpo.Model;
 namespace ApresentacaoALimpo
 {
     class Program
-    {        
-        private static string sqlServer = "mysqldb";
+    {
+        private const string SqlServerConfig = "mysqldb";
 
+        #region MAIN
         static void Main(string[] args)
         {
-            var currentDb = sqlServer;
+            var currentDb = SqlServerConfig;
             CreateDatabase(currentDb);
 
             ExecuteExamQuestion(currentDb);
@@ -24,7 +25,9 @@ namespace ApresentacaoALimpo
             Console.WriteLine("Application finished! Press <any key> to quit.");
             Console.ReadKey();
         }
+        #endregion
 
+        #region ExamQuestion
         private static string pendingAssetsStudentsQuery = @"
 select distinct s.Id, s.Email
 from Assets a
@@ -56,10 +59,10 @@ where a.WithStudent_Id = @student_id and a.Checkin is null
                 
                 SendEmailTo((string)row["Email"], sb.ToString());
             }
-        }        
+        }
+        #endregion
 
         #region Helper Methods
-
         private static DataSet GetDataSet(string query, SqlConnection conn, params SqlParameter[] parameters)
         {
             var comm = new SqlCommand(query, conn);
